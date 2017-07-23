@@ -1,0 +1,23 @@
+{
+    "name": "brice/squash-md",
+    "license": "MIT",
+    "description": "A Markdown export project for Squash TM Test Case",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "": "src/"
+        }
+    },
+    "autoload-dev": {
+      "psr-4": {
+        "Tests\\": "tests/"
+      }
+    },
+    "authors": [
+        {
+            "name": "Brice Favre",
+            "email": "brice.favre+project@gmail.com"
+        }
+    ],
+    "require": {}
+}
