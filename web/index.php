@@ -7,4 +7,4 @@ if (!file_exists('../app/config/parameters.ini')) {
 }
 
 $ctrl = new Controller(parse_ini_file('../app/config/parameters.ini'));
-$ctrl->main();
+echo $ctrl->main();

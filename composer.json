@@ -19,5 +19,7 @@
             "email": "brice.favre+project@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "league/commonmark": "0.11"
+    }
 }

@@ -16,9 +16,21 @@ class Controller
 
     public function Main()
     {
+        $action = $_GET['action'] ?? 'default';
+        switch($action) {
+            default:
+                return $this->returnFormatedTables();
+        }
+    }
+
+    protected function returnFormatedTables() {
         $data = $this->model->getAllTables();
 
-        return $this->view->format($data);
+        if (isset($_GET['export'])) {
+            return $this->view->format($data)->write();
+
+        }
+        return $this->view->format($data)->writeHTML();
     }
 
 
