@@ -19,12 +19,21 @@ class Controller
         $action = $_GET['action'] ?? 'default';
         switch($action) {
             default:
-                return $this->returnFormatedTables();
+                return $this->returnDefaultReport();
         }
     }
 
-    protected function returnFormatedTables() {
-        $data = $this->model->getAllTables();
+    protected function returnDefaultReport() {
+    	// First of all, we get all requirements
+        $data = $this->model->getAllRequirements();
+
+        foreach ($data as &$requirement) {
+			$requirement['cases'] = $this->model->getAllTestCaseForRequirement($requirement['id']);
+			foreach ($requirement['cases'] as & $case) {
+				$case['step'] = $this->model->getAllTestStepForTestCase($case['id']);
+			}
+		}
+
 
         if (isset($_GET['export'])) {
             return $this->view->format($data)->write();
