@@ -17,14 +17,89 @@ class Model
         $this->pdo = $pdo;
     }
 
-    public function getAllRequirements($status = 'APPROVED')
+	public function getAllCategories()
+	{
+		$stmt = $this->pdo->prepare('SELECT RLN_ID as id, NAME as name 
+		FROM RESOURCE  as R
+		INNER JOIN REQUIREMENT_FOLDER as RF on R.RES_ID = RF.RES_ID
+		ORDER BY name asc');
+		$stmt->execute();
+
+		return $stmt->fetchAll();
+    }
+
+	public function getAllVersions()
+	{
+		$stmt = $this->pdo->prepare('SELECT DISTINCT VALUE as name, VALUE as id
+		FROM CUSTOM_FIELD_VALUE');
+		$stmt->execute();
+
+		return $stmt->fetchAll();
+    }
+
+	public function getAllRequirementsByCustomFieldValue(string $value)
+	{
+		$stmt = $this->pdo->prepare( 'SELECT CFV.BOUND_ENTITY_ID as id, RV.REFERENCE as reference, R.NAME as name, R.DESCRIPTION as description   
+		FROM CUSTOM_FIELD_VALUE CFV
+		LEFT JOIN REQUIREMENT_VERSION RV on RV.RES_ID = CFV.BOUND_ENTITY_ID
+  		LEFT JOIN RESOURCE R on RV.RES_ID = R.RES_ID		
+		WHERE BOUND_ENTITY_TYPE = "REQUIREMENT_VERSION"
+		AND CFV.VALUE = :value
+		ORDER BY RV.REFERENCE');
+
+		$stmt->execute(array(':value' => $value));
+		return $stmt->fetchAll();
+    }
+
+	public function getAllRequirementsByFolderId(int $folderId, string $status = 'APPROVED')
+	{
+
+		$stmt = $this->pdo->prepare('SELECT R_V.RES_ID as id, R_V.REFERENCE as reference,R.NAME as name,R.DESCRIPTION as description 
+		FROM RESOURCE as R, REQUIREMENT_VERSION as R_V
+		LEFT JOIN RLN_RELATIONSHIP as R_R on R_R.DESCENDANT_ID = R_V.RES_ID 
+		WHERE R.RES_ID = R_V.RES_ID
+		AND R_V.REQUIREMENT_STATUS = :status
+		AND R_R.ANCESTOR_ID = :folderId
+		');
+
+		$stmt->execute(array(':status' => $status, ':folderId' => $folderId));
+		return $stmt->fetchAll();
+    }
+	public function getRequirementById(int $requirementId)
+	{
+		$stmt = $this->pdo->prepare('SELECT R_V.RES_ID as id, R_V.REFERENCE as reference,R.NAME as name,R.DESCRIPTION as description 
+		FROM RESOURCE as R, REQUIREMENT_VERSION as R_V
+		LEFT JOIN RLN_RELATIONSHIP as R_R on R_R.DESCENDANT_ID = R_V.RES_ID 
+		WHERE R.RES_ID = R_V.RES_ID
+		AND R_V.RES_ID = :requirementId
+		');
+
+		$stmt->execute(array(':requirementId' => $requirementId));
+		return $stmt->fetchAll();
+    }
+
+	public function getRequirementByReferenceId(string $referenceId)
+	{
+		$stmt = $this->pdo->prepare('SELECT R_V.RES_ID as id, R_V.REFERENCE as reference,R.NAME as name,R.DESCRIPTION as description 
+		FROM RESOURCE as R, REQUIREMENT_VERSION as R_V
+		LEFT JOIN RLN_RELATIONSHIP as R_R on R_R.DESCENDANT_ID = R_V.RES_ID 
+		WHERE R.RES_ID = R_V.RES_ID
+		AND R_V.REFERENCE = :referenceId
+		');
+
+		$stmt->execute(array(':referenceId' => $referenceId));
+		return $stmt->fetchAll();
+    }
+
+    public function getAllRequirements($status = 'APPROVED', $category = 10)
     {
-		$stmt = $this->pdo->prepare('SELECT R_V.RES_ID as id, R_V.REQUIREMENT_STATUS as status, R_V.REFERENCE as reference,R.NAME as name,R.DESCRIPTION as description 
+		$stmt = $this->pdo->prepare('SELECT R_V.RES_ID as id, R_V.REFERENCE as reference,R.NAME as name,R.DESCRIPTION as description 
 		FROM RESOURCE as R, REQUIREMENT_VERSION as R_V
 		WHERE R.RES_ID = R_V.RES_ID
-		AND R_V.REQUIREMENT_STATUS = :status;');
+		AND R_V.REQUIREMENT_STATUS = :status
+		AND R_V.CATEGORY = :category;');
 
-		$stmt->execute(array(':status' => $status));
+		$stmt->execute(array(':status' => $status, ':category' => $category));
 		return $stmt->fetchAll();
     }
 
@@ -34,7 +109,8 @@ class Model
 			FROM TEST_CASE TC
 			LEFT JOIN REQUIREMENT_VERSION_COVERAGE RVC on TC.TCLN_ID = RVC.VERIFYING_TEST_CASE_ID
 			LEFT JOIN TEST_CASE_LIBRARY_NODE TCLN on TC.TCLN_ID = TCLN.TCLN_ID
-			WHERE RVC.VERIFIED_REQ_VERSION_ID = :requirement_id;');
+			WHERE RVC.VERIFIED_REQ_VERSION_ID = :requirement_id
+			ORDER BY REFERENCE ASC;');
 
 		$stmt->execute(array(':requirement_id'=> $requirementId));
 		return $stmt->fetchAll();

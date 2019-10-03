@@ -20,6 +20,7 @@ class View
     {
 		$this->addLine('# Plan de test');
 
+		$this->formatTableOfContent($data);
 		$this->formatRequirements($data);
 
         return $this;
@@ -49,19 +50,41 @@ class View
     /**
      * @param $line
      */
-    private function addLine($line) {
+    private function addLine(string $line) {
         $this->return .= $line."\n";
     }
 
+	public function formatTableOfContent(array $data)
+	{
+		$index = 1;
+
+		$this->addLine('## Sommaire');
+
+		foreach ($data as $requirement) {
+			$line = $index.'. ['.$requirement['name'].'](?action=report&id=25&view=report&requirement='.$requirement['id'].')';
+			if ($requirement['reference']) {
+				list($ref, ) = explode(' ', $requirement['reference']);
+				list(, $taigaId) = explode('#',$ref);
+				$line = $index.'. ['.$requirement['name'].']'.'(https://tree.taiga.io/project/sqwib-ami-software/us/'.$taigaId.')';
+				$line .= ' - [Squash](http://ami-qa-master:8080/squash/requirement-versions/'.$requirement['id'].'/info)';
+			}
+			$this->addLine($line);
+			$subIndex = 1;
+			foreach ($requirement['cases'] as $case) {
+				$this->addLine("\t".$subIndex.'. '.$case['reference'].' - '.$case['name']);
+			}
+			$index++;
+		}
+    }
 	/**
 	 * @param $data
 	 */
-	public function formatRequirements($data)
+	public function formatRequirements(array $data)
 	{
 		foreach ($data as $datum) {
 			$this->formatChapter($datum, 2);
 			if (isset ($datum['cases'])) {
-				$this->addLine('### Cas de test');
+				// $this->addLine('### Cas de test');
 				$this->formatTestCases($datum['cases']);
 			}
 		}
@@ -70,14 +93,15 @@ class View
 	/**
 	 * @param $cases
 	 */
-	public function formatTestCases($cases)
+	public function formatTestCases(array $cases)
 	{
 		if (count($cases) == 0) {
 			$this->addLine('Pas de cas de test lié à cette exigence');
 		}
 		foreach ($cases as $case) {
-			$this->formatChapter($case, 4);
+			$this->formatChapter($case, 3);
 			if ($case['prerequisite']) {
+				$this->addLine("__Pré requis :__ ");
 				$this->addLine($case['prerequisite']);
 			}
 			if (isset($case['step'])) {
@@ -86,32 +110,43 @@ class View
 		}
 	}
 
-	public function formatTestCaseStep($steps)
+	public function formatTestCaseStep(array $steps)
 	{
 		if (count($steps) == 0) {
 			$this->addLine('Pas d\'étapes pour ce cas de test');
 			return;
 		} else {
-			$this->addLine('Étapes du test : ');
-			$this->addLine();
+			$this->addLine('__Étapes du test :__ ');
+			$this->addLine('');
 		}
 		$i = 1;
-		$this->addLine('| Num |   | Action | Résultat attendu |');
-		$this->addLine('| --- | - | ------ | ---------------- |');
+		$this->addLine('| - | Action | Résultat attendu |');
+		$this->addLine('| - | ------ | ---------------- |');
 		foreach ($steps as $step) {
-			$this->addLine('| '.$i.' | <input type="checkbox"> | '.strip_tags(trim($step['action'])).' | '.strip_tags(trim($step['expectedResult'])).' |');
+			$actionText = strip_tags(trim($step['action']));
+
+			$this->addLine('| '.$i.' | '.$this->formatTestCaseContent($step['action']).' | '.$this->formatTestCaseContent($step['expectedResult']).' |');
 			$i++;
 		}
-		$this->addLine();
+		$this->addLine('');
+	}
+
+	protected function formatTestCaseContent($content)
+	{
+		return str_replace("\n", "n", strip_tags(trim($content)));
 	}
 
 	/**
 	 * @param $data
 	 * @param int $level
 	 */
-	protected function formatChapter($data, $level = 1)
+	protected function formatChapter(array $data, int $level = 1)
 	{
-		$this->addLine(str_repeat('#', $level) .' '.$data['name']);
+		if (isset ($data['reference']) && $data['reference'] != '') {
+			$this->addLine(str_repeat('#', $level) .' '.$data['reference'].' - '.$data['name']);
+		} else {
+			$this->addLine(str_repeat('#', $level) .' '.$data['name']);
+		}
 
 		$this->addLine($data['description']);
 	}
