@@ -1,7 +1,7 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
     "content-hash": "4b3c20d1dd5312667b6b5b1d0589bfba",
@@ -132,7 +132,7 @@
                 "markdown",
                 "table"
             ],
-            "abandoned": "league/commonmark-ext-table",
+            "abandoned": "league/commonmark",
             "time": "2017-01-11T14:52:17+00:00"
         }
     ],

@@ -6,45 +6,47 @@ use Model\Model;
 
 class Controller
 {
-    protected $config;
+	protected $config;
 
-    protected $model;
+	protected $model;
 
-    protected $view;
+	protected $view;
 
-    public function __construct($config)
-    {
-        $pdo  = new PDO($config['dsn'], $config['db_user'], $config['db_pass']);
-        $this->model = new Model($pdo);
+	public function __construct($config)
+	{
+		$pdo = new PDO($config['dsn'], $config['db_user'], $config['db_pass']);
+		$this->model = new Model($pdo);
 		$view = $_GET['view'] ?? 'summary';
 
 		if ($view == 'summary') {
-			$this->view  = new SummaryView();
+			$this->view = new SummaryView();
 		} else {
-			$this->view  = new View();
+			$this->view = new View();
 		}
-    }
+	}
 
-    public function Main()
-    {
-        $action = $_GET['action'] ?? 'default';
+	public function Main()
+	{
+		$action = $_GET['action'] ?? 'default';
 		$id = $_GET['id'] ?? 0;
 		$referenceIds = $_GET['referenceIds'] ?? [];
 		$requirementId = $_GET['requirement'] ?? null;
 
-        switch($action) {
+		switch ($action) {
 			case 'display_test_case':
 				return $this->displayTestCase($referenceIds);
 			case 'list':
 				return $this->returnListRequirements($id);
+			case 'list_iteration':
+				return $this->returnIterationReport($id);
 			case 'report':
 				return $this->returnDefaultReport($id, $requirementId);
-            default:
+			default:
 				return $this->displaySummary();
-        }
-    }
+		}
+	}
 
-    protected function displayTestCase($referenceIds)
+	protected function displayTestCase($referenceIds)
 	{
 		$return = '';
 		foreach ($referenceIds as $id) {
@@ -65,20 +67,23 @@ class Controller
 
 	protected function displaySummary()
 	{
-		$sortBy= $_GET['sort'] ?? 'default';
+		$sortBy = $_GET['sort'] ?? 'default';
 
 		if ($sortBy == "version") {
 			$this->view->setAction('list');
 			$data = $this->model->getAllVersions();
+		} else if ($sortBy == "iteration") {
+			$this->view->setAction('list_iteration');
+			$data = $this->model->getAllIterations();
 		} else {
 			$this->view->setAction('report');
 			$data = $this->model->getAllCategories();
 		}
 
 		return $this->view->format($data)->write();
-    }
+	}
 
-    protected function returnDefaultReport(int $folderId, int $requirementId = null)
+	protected function returnDefaultReport(int $folderId, int $requirementId = null)
 	{
 		// First of all, we get all requirements
 		if ($folderId == 0) {
@@ -89,27 +94,37 @@ class Controller
 			$data = $this->model->getallRequirementsByFolderId($folderId);
 		}
 
-        foreach ($data as &$requirement) {
+		foreach ($data as &$requirement) {
 			$requirement['cases'] = $this->model->getAllTestCaseForRequirement($requirement['id']);
 			foreach ($requirement['cases'] as & $case) {
 				$case['step'] = $this->model->getAllTestStepForTestCase($case['id']);
 			}
 		}
 
-        if (isset($_GET['export'])) {
-            return $this->view->format($data)->write();
+		if (isset($_GET['export'])) {
+			return $this->view->format($data)->write();
 
-        }
-        return $this->view->format($data)->writeHTML();
-    }
+		}
+		return $this->view->format($data)->writeHTML();
+	}
 
-    protected function returnListRequirements(string $value)
+	protected function returnListRequirements(string $value)
 	{
-    	$data = $this->model->getAllRequirementsByCustomFieldValue($value);
+		$data = $this->model->getAllRequirementsByCustomFieldValue($value);
 
 		if (isset($_GET['export'])) {
 			return $this->view->format($data)->write();
 		}
 		return $this->view->format($data)->writeHTML();
 	}
+
+	protected function returnIterationReport(int $requirementId)
+	{
+		$data = $this->model->getAllTestCaseForIteration($requirementId);
+		foreach ($data as &$case) {
+			$case['step'] = $this->model->getAllTestStepForTestCase($case['id']);
+		}
+		return $this->view->formatTestCases($data)->write();
+	}
+
 }

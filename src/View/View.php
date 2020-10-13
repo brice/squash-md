@@ -75,6 +75,7 @@ class View
 			}
 			$index++;
 		}
+		return $this;
     }
 	/**
 	 * @param $data
@@ -88,6 +89,7 @@ class View
 				$this->formatTestCases($datum['cases']);
 			}
 		}
+		return $this;
 	}
 
 	/**
@@ -99,7 +101,7 @@ class View
 			$this->addLine('Pas de cas de test lié à cette exigence');
 		}
 		foreach ($cases as $case) {
-			$this->formatChapter($case, 3);
+			$this->formatChapter($case, 2);
 			if ($case['prerequisite']) {
 				$this->addLine("__Pré requis :__ ");
 				$this->addLine($case['prerequisite']);
@@ -108,6 +110,7 @@ class View
 				$this->formatTestCaseStep($case['step']);
 			}
 		}
+		return $this;
 	}
 
 	public function formatTestCaseStep(array $steps)
@@ -120,20 +123,22 @@ class View
 			$this->addLine('');
 		}
 		$i = 1;
-		$this->addLine('| - | Action | Résultat attendu |');
-		$this->addLine('| - | ------ | ---------------- |');
+		$this->addLine('| - | Action | Résultat attendu | OK<br/>NOK | Commentaires | ');
+		$this->addLine('| - | ------ | ---------------- | ---------- | ------------ |');
 		foreach ($steps as $step) {
 			$actionText = strip_tags(trim($step['action']));
 
-			$this->addLine('| '.$i.' | '.$this->formatTestCaseContent($step['action']).' | '.$this->formatTestCaseContent($step['expectedResult']).' |');
+			$this->addLine('| '.$i.' | '.$this->formatTestCaseContent($step['action']).' | '.$this->formatTestCaseContent($step['expectedResult']).' |||');
 			$i++;
 		}
 		$this->addLine('');
+
+		return $this;
 	}
 
 	protected function formatTestCaseContent($content)
 	{
-		return str_replace("\n", "n", strip_tags(trim($content)));
+		return str_replace("\n", "<br/>", strip_tags(trim($content)));
 	}
 
 	/**

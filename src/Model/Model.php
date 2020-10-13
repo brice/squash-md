@@ -37,6 +37,19 @@ class Model
 		return $stmt->fetchAll();
     }
 
+	/**
+	 *
+	 */
+	public function getAllIterations()
+	{
+		$stmt = $this->pdo->prepare('SELECT DISTINCT NAME as name, ITERATION_ID as id
+		FROM ITERATION');
+		$stmt->execute();
+
+		return $stmt->fetchAll();
+
+    }
+
 	public function getAllRequirementsByCustomFieldValue(string $value)
 	{
 		$stmt = $this->pdo->prepare( 'SELECT CFV.BOUND_ENTITY_ID as id, RV.REFERENCE as reference, R.NAME as name, R.DESCRIPTION as description   
@@ -65,6 +78,7 @@ class Model
 		$stmt->execute(array(':status' => $status, ':folderId' => $folderId));
 		return $stmt->fetchAll();
     }
+
 	public function getRequirementById(int $requirementId)
 	{
 		$stmt = $this->pdo->prepare('SELECT R_V.RES_ID as id, R_V.REFERENCE as reference,R.NAME as name,R.DESCRIPTION as description 
@@ -113,6 +127,20 @@ class Model
 			ORDER BY REFERENCE ASC;');
 
 		$stmt->execute(array(':requirement_id'=> $requirementId));
+		return $stmt->fetchAll();
+    }
+
+	public function getAllTestCaseForIteration($iterationId)
+	{
+		$stmt = $this->pdo->prepare('SELECT TC.TCLN_ID as id, TCLN.NAME as name, DESCRIPTION as description, REFERENCE as reference, PREREQUISITE as prerequisite
+			FROM TEST_CASE TC
+			LEFT JOIN ITERATION_TEST_PLAN_ITEM ITPI ON ITPI.TCLN_ID = TC.TCLN_ID
+			LEFT JOIN ITEM_TEST_PLAN_LIST ITPL ON ITPL.ITEM_TEST_PLAN_ID = ITPI.ITEM_TEST_PLAN_ID 
+			LEFT JOIN TEST_CASE_LIBRARY_NODE TCLN on TC.TCLN_ID = TCLN.TCLN_ID
+			WHERE ITPL.ITERATION_ID = :iteration_id
+			ORDER BY REFERENCE ASC;');
+
+		$stmt->execute(array(':iteration_id'=> $iterationId));
 		return $stmt->fetchAll();
     }
 
