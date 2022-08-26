@@ -34,7 +34,15 @@ class View
         return $this->return;
     }
 
-    /**
+	/**
+	 * @return mixed
+	 */
+	public function preformatWrite()
+	{
+		return '<pre>'.$this->return.'</pre>';
+	}
+
+	/**
      * @return string
      */
     public function writeHTML()

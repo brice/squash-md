@@ -33,6 +33,8 @@ class Controller
 		$requirementId = $_GET['requirement'] ?? null;
 
 		switch ($action) {
+			case 'display_project':
+				return $this->returnProjectReport($id);
 			case 'display_test_case':
 				return $this->displayTestCase($referenceIds);
 			case 'list':
@@ -51,7 +53,6 @@ class Controller
 		$return = '';
 		foreach ($referenceIds as $id) {
 			$data = $this->model->getRequirementByReferenceId($id);
-
 			foreach ($data as &$requirement) {
 				$requirement['cases'] = $this->model->getAllTestCaseForRequirement($requirement['id']);
 				foreach ($requirement['cases'] as & $case) {
@@ -76,8 +77,9 @@ class Controller
 			$this->view->setAction('list_iteration');
 			$data = $this->model->getAllIterations();
 		} else {
-			$this->view->setAction('report');
-			$data = $this->model->getAllCategories();
+			$this->view->setAction('display_project');
+			// $data = $this->model->getAllCategories();
+			$data = $this->model->getAllProjects();
 		}
 
 		return $this->view->format($data)->write();
@@ -127,4 +129,12 @@ class Controller
 		return $this->view->formatTestCases($data)->write();
 	}
 
+	private function returnProjectReport($projectId)
+	{
+		$data = $this->model->getAllTestCaseForProject($projectId);
+		foreach ($data as &$case) {
+			$case['step'] = $this->model->getAllTestStepForTestCase($case['id']);
+		}
+		return $this->view->formatTestCases($data)->write();
+	}
 }

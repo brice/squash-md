@@ -17,16 +17,48 @@ class Model
         $this->pdo = $pdo;
     }
 
+	public function getAllProjects()
+	{
+		$stmt = $this->pdo->prepare('SELECT PROJECT_ID as id, NAME as name 
+		FROM PROJECT 
+		ORDER BY name asc');
+
+		$stmt->execute();
+
+		return $stmt->fetchAll();
+	}
+
 	public function getAllCategories()
 	{
 		$stmt = $this->pdo->prepare('SELECT RLN_ID as id, NAME as name 
 		FROM RESOURCE  as R
 		INNER JOIN REQUIREMENT_FOLDER as RF on R.RES_ID = RF.RES_ID
 		ORDER BY name asc');
+
 		$stmt->execute();
 
 		return $stmt->fetchAll();
     }
+
+	public function getAllCategoriesByProjectId(string $value)
+	{
+		$stmt = $this->pdo->prepare('SELECT RLN_ID as id, NAME as name 
+		FROM RESOURCE  as R
+		INNER JOIN REQUIREMENT_FOLDER as RF on R.RES_ID = RF.RES_ID
+		INNER JOIN REQUIREMENT_LIBRARY_NODE as RLN on RF.RLN_ID = RLN.RLN_ID
+		AND PROJECT_ID = :value
+		ORDER BY name asc');
+
+		echo "SELECT RLN_ID as id, NAME as name 
+		FROM RESOURCE  as R
+		INNER JOIN REQUIREMENT_FOLDER as RF on R.RES_ID = RF.RES_ID
+		INNER JOIN REQUIREMENT_LIBRARY_NODE as RLN on RF.RLN_ID = RLN.RLN_ID
+	AND PROJECT_ID = $value
+		ORDER BY name asc";
+		$stmt->execute();
+
+		return $stmt->fetchAll();
+	}
 
 	public function getAllVersions()
 	{
@@ -129,6 +161,19 @@ class Model
 		$stmt->execute(array(':requirement_id'=> $requirementId));
 		return $stmt->fetchAll();
     }
+
+	public function getAllTestCaseForProject($projectId)
+	{
+		$stmt = $this->pdo->prepare('SELECT TC.TCLN_ID as id, TCLN.NAME as name, DESCRIPTION as description, REFERENCE as reference, PREREQUISITE as prerequisite
+			FROM TEST_CASE TC
+			LEFT JOIN ITERATION_TEST_PLAN_ITEM ITPI ON ITPI.TCLN_ID = TC.TCLN_ID
+			LEFT JOIN TEST_CASE_LIBRARY_NODE TCLN on TC.TCLN_ID = TCLN.TCLN_ID
+			WHERE TCLN.PROJECT_ID = :project_id
+			ORDER BY REFERENCE ASC;');
+
+		$stmt->execute(array(':project_id' => $projectId));
+		return $stmt->fetchAll();
+	}
 
 	public function getAllTestCaseForIteration($iterationId)
 	{
